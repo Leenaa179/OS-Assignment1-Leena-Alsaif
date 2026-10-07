@@ -30,7 +30,12 @@ class Process implements Runnable {
     private int timeQuantum; // Time slice (time quantum) allowed per CPU access (in milliseconds)
     private int remainingTime; // Time left for the process to finish its execution
 // Feature 1: Process execution priority rank
-    private int priorityScore;  // Feature 1: Process execution priority rank
+    private int priorityScore; 
+// Feature 3: Performance evaluation fields
+    private long startTimestamp;
+    private long endTimestamp;
+    private long totalWaitDuration;
+    private long turnaroundDuration;
     // Constructor to initialize the process with name, burst time, and time quantum
    public Process(String name, int burstTime, int timeQuantum, int priorityScore) {
         this.name = name;
@@ -38,6 +43,7 @@ class Process implements Runnable {
         this.timeQuantum = timeQuantum;
         this.remainingTime = burstTime; // Initially, remaining time is equal to the burst time
         this.priorityScore = priorityScore;  // Feature 1: Set priority level
+        this.startTimestamp = System.currentTimeMillis();  // Feature 3: Capture process creation time
     }
 
     // This method will be called when the thread for this process is started
@@ -87,6 +93,10 @@ class Process implements Runnable {
                               " yields CPU for context switch" + Colors.RESET);
         } else {
             // If no time is left, the process has finished its execution
+            // Feature 3: Compute final timing statistics
+        this.endTimestamp = System.currentTimeMillis();
+        this.turnaroundDuration = this.endTimestamp - this.startTimestamp;
+        this.totalWaitDuration = Math.max(0, this.turnaroundDuration - this.burstTime);
             System.out.println(Colors.BRIGHT_GREEN + "  ✓ " + Colors.BOLD + Colors.CYAN + name + 
                               Colors.RESET + Colors.BRIGHT_GREEN + " finished execution!" + 
                               Colors.RESET);
@@ -142,6 +152,11 @@ class Process implements Runnable {
     public int getPriorityScore() {
        return priorityScore;
     }
+// Feature 3: Metric getters
+public long getTotalWaitDuration() {
+     return totalWaitDuration; }
+public long getTurnaroundDuration() { 
+    return turnaroundDuration; }
     // Check if the process has finished (i.e., no remaining time)
     public boolean isFinished() {
         return remainingTime <= 0;
@@ -170,6 +185,8 @@ public static int totalSwitches = 0;  // Feature 2: Counter for active CPU conte
         
         // Map to associate each thread with its respective process object
         Map<Thread, Process> processMap = new HashMap<>();
+    // Feature 3: Collection to record processes for performance auditing
+       java.util.List<Process> processRegistry = new java.util.ArrayList<>();    
         
         // Print simulation header with elegant formatting
         System.out.println("\n" + Colors.BOLD + Colors.BRIGHT_CYAN + 
@@ -206,7 +223,8 @@ public static int totalSwitches = 0;  // Feature 2: Counter for active CPU conte
             
             // Create a new process object with a unique name, burst time, and the defined time quantum
             Process process = new Process("P" + i, burstTime, timeQuantum, priorityScore);
-            
+            // Feature 3: Register process for metrics tracking
+            processRegistry.add(process);
             // Add the process to the ready queue and the map
             addProcessToQueue(process, processQueue, processMap);
         }
@@ -288,6 +306,16 @@ public static int totalSwitches = 0;  // Feature 2: Counter for active CPU conte
                           Colors.RESET + "\n");
          // Feature 2: Report total context switches
         System.out.println(Colors.BOLD + Colors.BRIGHT_YELLOW + "  ⚙️ Total Context Switch Operations: " + Colors.RESET + totalSwitches + "\n");
+        // Feature 3: Display Performance Audit Table
+        System.out.println(Colors.BOLD + Colors.BRIGHT_CYAN + "┌-------------------------------------------------------------------------┐" + Colors.RESET);
+        System.out.println(Colors.BOLD + Colors.BRIGHT_CYAN + "│                       PROCESS EXECUTION METRICS                         │" + Colors.RESET);
+        System.out.println(Colors.BOLD + Colors.BRIGHT_CYAN + "└-------------------------------------------------------------------------┘" + Colors.RESET);
+        System.out.printf("%-12s %-16s %-18s %-20s%n", "Process", "Burst Time (ms)", "Waiting Time (ms)", "Turnaround Time (ms)");
+        System.out.println("---------------------------------------------------------------------------");
+for (Process p : processRegistry) {
+    System.out.printf("%-12s %-16d %-18d %-20d%n", p.getName(), p.getBurstTime(), p.getTotalWaitDuration(), p.getTurnaroundDuration());
+}
+System.out.println(Colors.BOLD + Colors.BRIGHT_CYAN + "---------------------------------------------------------------------------" + Colors.RESET + "\n");
     }
     
     // Method to add a process to the queue and map, while printing a "ready" message
