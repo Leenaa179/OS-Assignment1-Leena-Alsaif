@@ -149,6 +149,8 @@ class Process implements Runnable {
 }
 
 public class SchedulerSimulation {
+    
+public static int totalSwitches = 0;  // Feature 2: Counter for active CPU context switches
     public static void main(String[] args) {
         // ⚠️ IMPORTANT: Put your student ID here to seed the random number generator
         // This makes your output unique to you - DO NOT forget to change this!
@@ -225,7 +227,9 @@ public class SchedulerSimulation {
         while (!processQueue.isEmpty()) {
             // Get the next thread from the queue (FIFO)
             Thread currentThread = processQueue.poll(); // Dequeues the next thread
-            
+            // Feature 2: Increment CPU switch count
+            totalSwitches++;
+ 
             // Print the current process queue (list of process IDs in the queue)
             System.out.println(Colors.BOLD + Colors.MAGENTA + "┌─ Ready Queue " + "─".repeat(65) + Colors.RESET);
             System.out.print(Colors.MAGENTA + "│ " + Colors.RESET + Colors.BRIGHT_WHITE + "[" + Colors.RESET);
@@ -282,6 +286,8 @@ public class SchedulerSimulation {
         System.out.println(Colors.BOLD + Colors.BRIGHT_GREEN + 
                           "╚════════════════════════════════════════════════════════════════════════════════╝" + 
                           Colors.RESET + "\n");
+         // Feature 2: Report total context switches
+        System.out.println(Colors.BOLD + Colors.BRIGHT_YELLOW + "  ⚙️ Total Context Switch Operations: " + Colors.RESET + totalSwitches + "\n");
     }
     
     // Method to add a process to the queue and map, while printing a "ready" message
@@ -301,5 +307,7 @@ public class SchedulerSimulation {
                   Colors.RESET + Colors.BLUE + " added to queue" + Colors.RESET + 
                   " │ Burst: " + Colors.YELLOW + process.getBurstTime() + "ms" + 
                   Colors.RESET + " │ Priority Level: " + Colors.MAGENTA + process.getPriorityScore() + Colors.RESET);
+                  
+        
     }
 }
